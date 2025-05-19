@@ -72,9 +72,11 @@ app.post('/api/meals', async (req, res) => {
     }
 });
 
-// Serve index.html
+// Serve index.html from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(port, () => {

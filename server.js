@@ -1,17 +1,22 @@
+const dotenv = require('dotenv');
+dotenv.config();
 const express = require('express');
-const { createClient } = require('@supabase/supabase-js');
-const path = require('path'); // Import the 'path' module
-require('dotenv').config(); // Add this at the top of the file
+const supabaseClient = require('@supabase/supabase-js');
+
 
 const app = express();
 const port = 3000;
-
-app.use(express.json());
+app.use(express.static(__dirname + '/public'));
 
 // Supabase configuration
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = supabaseClient.createClient(supabaseUrl, supabaseKey);
+
+
+app.get('/', (req, res) => {
+    res.sendFile('/public/index.html', { root: __dirname });
+});
 
 // API to get nutrition summary
 app.get('/api/nutrition-summary', async (req, res) => {
@@ -72,13 +77,6 @@ app.post('/api/meals', async (req, res) => {
         console.error('Error creating meal:', error.message, error.stack);
         res.status(500).json({ error: 'Internal server error', details: error.message });
     }
-});
-
-// Serve index.html from the public directory
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(port, () => {

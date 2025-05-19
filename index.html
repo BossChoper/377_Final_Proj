@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nutrition Charts</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        nav {
+            background-color: #2c3e50;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #3498db;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            gap: 2rem;
+        }
+
+        .hero {
+            background: linear-gradient(to right, #3498db, #2ecc71);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+            border-radius: 10px;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        #meal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 500px;
+            margin: 2rem auto;
+        }
+
+        #meal-form input, #meal-form select, #meal-form button {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        #meal-form button {
+            background: #2ecc71;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #meal-form button:hover {
+            background: #27ae60;
+        }
+
+        canvas {
+            max-width: 100%;
+            margin: 2rem auto;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            background: #2c3e50;
+            color: white;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="#home" onclick="loadPage('home')">Home</a></li>
+            <li><a href="#about" onclick="loadPage('about')">About</a></li>
+            <li><a href="#planner" onclick="loadPage('planner')">Meal Planner</a></li>
+        </ul>
+    </nav>
+
+    <div class="container" id="content">
+        <!-- Dynamic content loaded here -->
+    </div>
+
+    <footer>
+        <p>© 2025 Nutrition Charts and Tracking by Martin Konteh. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://zvwjcqpahurefwscuzll.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2d2pjcXBhaHVyZWZ3c2N1emxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2MTE4MDMsImV4cCI6MjA2MzE4NzgwM30.LyHVR2SrWwP_VsC0mDbr8612f3x4fd0ZIH95d1S3MiI';
+
+        // Page content templates
+        const pages = {
+            home: `
+                <div class="hero">
+                    <h1>Welcome to Nutrition Charts and Meal Tracking! </h1>
+                    <p>Plan your meals, track your nutrition, and live healthier!</p>
+                </div>
+                <div class="content-grid">
+                    <div class="card">
+                        <h2>Track Meals</h2>
+                        <p>Log your daily meals and monitor nutritional intake.</p>
+                    </div>
+                    <div class="card">
+                        <h2>Visualize Data</h2>
+                        <p>See your progress with interactive charts.</p>
+                    </div>
+                    <div class="card">
+                        <h2>Plan Ahead</h2>
+                        <p>Create weekly meal plans with ease.</p>
+                    </div>
+                </div>
+            `,
+            about: `
+                <div class="hero">
+                    <h1>About Us</h1>
+                    <p>Learn about our mission to promote healthy eating.</p>
+                </div>
+                <div class="content-grid">
+                    <div class="card">
+                        <h2>Our Mission</h2>
+                        <p>Empowering individuals to make informed nutrition choices.</p>
+                    </div>
+                    <div class="card">
+                        <h2>Our Team</h2>
+                        <p>Nutritionists and developers working together.</p>
+                    </div>
+                    <div class="card">
+                        <h2>Contact</h2>
+                        <p>Reach out at support@nutritionplanner.com</p>
+                    </div>
+                </div>
+            `,
+            planner: `
+                <div class="hero">
+                    <h1>Meal Planner</h1>
+                    <p>Create and track your meal plans.</p>
+                </div>
+                <div id="meal-form">
+                    <input type="text" id="meal-name" placeholder="Meal Name" required>
+                    <select id="meal-type" required>
+                        <option value="">Select Meal Type</option>
+                        <option value="Breakfast">Breakfast</option>
+                        <option value="Lunch">Lunch</option>
+                        <option value="Dinner">Dinner</option>
+                    </select>
+                    <input type="number" id="calories" placeholder="Calories" required>
+                    <button onclick="saveMeal()">Save Meal</button>
+                </div>
+                <canvas id="nutrition-chart"></canvas>
+                <div id="meal-list" class="content-grid"></div>
+            `
+        };
+
+        // Load page content
+        function loadPage(page) {
+            const content = document.getElementById('content');
+            content.innerHTML = pages[page];
+            gsap.from('.card', { opacity: 0, y: 50, stagger: 0.2, duration: 0.8 });
+
+            if (page === 'planner') {
+                fetchMeals();
+                fetchNutritionSummary();
+            }
+        }
+
+        // Fetch all meals
+        async function fetchMeals() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/meals`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${SUPABASE_KEY}`
+                    }
+                });
+                const meals = await response.json();
+                displayMeals(meals);
+            } catch (error) {
+                console.error('Error fetching meals:', error);
+            }
+        }
+
+        // Fetch nutrition summary
+        async function fetchNutritionSummary() {
+            try {
+                const response = await fetch('/api/nutrition-summary');
+                const data = await response.json();
+                renderChart(data);
+            } catch (error) {
+                console.error('Error fetching nutrition summary:', error);
+            }
+        }
+
+        // Save meal
+        async function saveMeal() {
+            const meal = {
+                name: document.getElementById('meal-name').value,
+                type: document.getElementById('meal-type').value,
+                calories: parseInt(document.getElementById('calories').value)
+            };
+
+            try {
+                const response = await fetch('/api/meals', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(meal)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to save meal');
+                }
+
+                fetchMeals();
+                fetchNutritionSummary();
+                document.getElementById('meal-form').reset();
+            } catch (error) {
+                console.error('Error saving meal:', error);
+            }
+        }
+
+        // Display meals
+        function displayMeals(meals) {
+            const mealList = document.getElementById('meal-list');
+            mealList.innerHTML = meals.map(meal => `
+                <div class="card">
+                    <h3>${meal.name}</h3>
+                    <p>Type: ${meal.type}</p>
+                    <p>Calories: ${meal.calories}</p>
+                </div>
+            `).join('');
+            gsap.from('.card', { opacity: 0, y: 50, stagger: 0.2, duration: 0.8 });
+        }
+
+        // Render nutrition chart
+        let chartInstance = null;
+        function renderChart(data) {
+            const ctx = document.getElementById('nutrition-chart').getContext('2d');
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Breakfast', 'Lunch', 'Dinner'],
+                    datasets: [{
+                        label: 'Calories by Meal Type',
+                        data: [
+                            data.find(d => d.type === 'Breakfast')?.total_calories || 0,
+                            data.find(d => d.type === 'Lunch')?.total_calories || 0,
+                            data.find(d => d.type === 'Dinner')?.total_calories || 0
+                        ],
+                        backgroundColor: ['#3498db', '#2ecc71', '#e74c3c']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Calories'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initial load
+        loadPage('home');
+    </script>
+</body>
+</html>

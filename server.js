@@ -1,14 +1,16 @@
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const path = require('path'); // Import the 'path' module
+require('dotenv').config(); // Add this at the top of the file
+
 const app = express();
 const port = 3000;
 
 app.use(express.json());
 
 // Supabase configuration
-const supabaseUrl = 'https://zvwjcqpahurefwscuzll.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2d2pjcXBhaHVyZWZ3c2N1emxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2MTE4MDMsImV4cCI6MjA2MzE4NzgwM30.LyHVR2SrWwP_VsC0mDbr8612f3x4fd0ZIH95d1S3MiI';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // API to get nutrition summary

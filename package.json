@@ -2,20 +2,20 @@
   "name": "final_project",
   "version": "1.0.0",
   "description": "INST377 Final Project",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/BossChoper/INST377_Final_Project.git"
+    "url": "git+https://github.com/BossChoper/377_Final_Proj.git"
   },
   "author": "Martin Konteh",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/BossChoper/INST377_Final_Project/issues"
+    "url": "https://github.com/BossChoper/377_Final_Proj.git/issues"
   },
-  "homepage": "https://github.com/BossChoper/INST377_Final_Project#readme",
+  "homepage": "https://github.com/BossChoper/377_Final_Proj.git#readme",
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
     "@vercel/node": "^5.1.16",

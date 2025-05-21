@@ -120,7 +120,7 @@
         }
 
         .nutritionix-section {
-            margin-bottom: 3rem; /* Adjusted margin to push down the chart/meal list */
+            margin-bottom: 3rem;
             padding-bottom: 2rem;
             border-bottom: 1px solid #eee;
         }
@@ -141,9 +141,8 @@
             margin-top: 1.5rem;
         }
 
-        /* Reusing card style for Nutritionix items for consistent look */
         .nutritionix-item {
-            background: white; /* Changed to white */
+            background: white;
             padding: 1.5rem;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -161,15 +160,36 @@
             background: #3498db;
             color: white;
             border: none;
-            border-radius: 5px; /* Adjusted to match form buttons */
+            border-radius: 5px;
             cursor: pointer;
-            padding: 0.75rem 1.25rem; /* Adjusted padding to match form buttons */
-            font-size: 1rem; /* Adjusted font size */
+            padding: 0.75rem 1.25rem;
+            font-size: 1rem;
             transition: background 0.3s;
         }
 
         .nutritionix-item button:hover {
             background: #2980b9;
+        }
+
+        .chart-controls {
+            text-align: center;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .chart-controls button {
+            background: #e74c3c; /* Red color for clear button */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 0.75rem 1.25rem;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+
+        .chart-controls button:hover {
+            background: #c0392b;
         }
 
 
@@ -204,7 +224,7 @@
     <script>
         // Supabase configuration
         const SUPABASE_URL = 'https://zvwjcqpahurefwscuzll.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6ImpxwTCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2d2pjcXBhaHVyZWZ3c2N1emxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2MTE4MDMsImV4cCI6MjA2MzE4NzgwM30.LyHVR2SrWwP_VsC0mDbr8612f3x4fd0ZIH95d1S3MiI';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2d2pjcXBhaHVyZWZ3c2N1emxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2MTE4MDMsImV4cCI6MjA2MzE4NzgwM30.LyHVR2SrWwP_VsC0mDbr8612f3x4fd0ZIH95d1S3MiI';
 
         // Page content templates
         const pages = {
@@ -277,6 +297,10 @@
                     </select>
                     <input type="number" id="calories" placeholder="Calories" required>
                     <button onclick="saveMeal()">Save Meal</button>
+                </div>
+
+                <div class="chart-controls">
+                    <button onclick="clearAllMeals()">Clear All Meals</button>
                 </div>
                 <canvas id="nutrition-chart"></canvas>
                 <div id="meal-list" class="content-grid"></div>
@@ -402,6 +426,32 @@
                 }
             });
         }
+
+        // MODIFIED FUNCTION: Clear all meals from the database and refresh display
+        async function clearAllMeals() {
+            if (!confirm('Are you sure you want to delete ALL meal entries? This action cannot be undone.')) {
+                return; // User cancelled
+            }
+
+            try {
+                const response = await fetch('/api/meals/clear-all', {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to clear all meals');
+                }
+
+                alert('All meal entries cleared successfully!');
+                // Refresh the meal list and chart after clearing
+                fetchMeals();
+                fetchNutritionSummary();
+            } catch (error) {
+                console.error('Error clearing meals:', error);
+                alert('Error clearing meal entries. Please try again.');
+            }
+        }
+
 
         // Nutritionix: Search Food
         async function searchFood() {

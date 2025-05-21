@@ -119,6 +119,60 @@
             margin-top: 2rem;
         }
 
+        .nutritionix-section {
+            margin-bottom: 3rem; /* Adjusted margin to push down the chart/meal list */
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .nutritionix-search {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            justify-content: center;
+        }
+
+        .nutritionix-search input {
+            flex-grow: 1;
+            max-width: 400px;
+        }
+
+        .nutritionix-results, .common-foods {
+            margin-top: 1.5rem;
+        }
+
+        /* Reusing card style for Nutritionix items for consistent look */
+        .nutritionix-item {
+            background: white; /* Changed to white */
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nutritionix-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .nutritionix-item button {
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px; /* Adjusted to match form buttons */
+            cursor: pointer;
+            padding: 0.75rem 1.25rem; /* Adjusted padding to match form buttons */
+            font-size: 1rem; /* Adjusted font size */
+            transition: background 0.3s;
+        }
+
+        .nutritionix-item button:hover {
+            background: #2980b9;
+        }
+
+
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
@@ -141,8 +195,7 @@
     </nav>
 
     <div class="container" id="content">
-        <!-- Dynamic content loaded here -->
-    </div>
+        </div>
 
     <footer>
         <p>© 2025 Nutrition Charts and Tracking by Martin Konteh. All rights reserved.</p>
@@ -151,7 +204,7 @@
     <script>
         // Supabase configuration
         const SUPABASE_URL = 'https://zvwjcqpahurefwscuzll.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2d2pjcXBhaHVyZWZ3c2N1emxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2MTE4MDMsImV4cCI6MjA2MzE4NzgwM30.LyHVR2SrWwP_VsC0mDbr8612f3x4fd0ZIH95d1S3MiI';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6ImpxwTCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2d2pjcXBhaHVyZWZ3c2N1emxsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc2MTE4MDMsImV4cCI6MjA2MzE4NzgwM30.LyHVR2SrWwP_VsC0mDbr8612f3x4fd0ZIH95d1S3MiI';
 
         // Page content templates
         const pages = {
@@ -200,6 +253,20 @@
                     <h1>Meal Planner</h1>
                     <p>Create and track your meal plans.</p>
                 </div>
+
+                <div class="nutritionix-section">
+                    <h2>Nutritionix Food Search</h2>
+                    <div class="nutritionix-search">
+                        <input type="text" id="food-search-input" placeholder="Search for a food item">
+                        <button onclick="searchFood()">Search Food</button>
+                    </div>
+                    <h3>Search Results</h3>
+                    <div id="nutritionix-search-results" class="content-grid"></div>
+
+                    <h3>Common Foods</h3>
+                    <div id="common-foods" class="content-grid"></div>
+                </div>
+
                 <div id="meal-form">
                     <input type="text" id="meal-name" placeholder="Meal Name" required>
                     <select id="meal-type" required>
@@ -225,6 +292,7 @@
             if (page === 'planner') {
                 fetchMeals();
                 fetchNutritionSummary();
+                fetchCommonFoods();
             }
         }
 
@@ -333,6 +401,105 @@
                     }
                 }
             });
+        }
+
+        // Nutritionix: Search Food
+        async function searchFood() {
+            const query = document.getElementById('food-search-input').value;
+            if (!query) return;
+
+            try {
+                const response = await fetch(`/api/nutritionix/search?query=${encodeURIComponent(query)}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                displayNutritionixResults(data.foods || []);
+            } catch (error) {
+                console.error('Error searching food:', error);
+                document.getElementById('nutritionix-search-results').innerHTML = `<p>Error searching for food. Please try again.</p>`;
+            }
+        }
+
+        // Nutritionix: Fetch Common Foods
+        async function fetchCommonFoods() {
+            try {
+                const response = await fetch('/api/nutritionix/common');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                displayCommonFoods(data.common || []);
+            } catch (error) {
+                console.error('Error fetching common foods:', error);
+                document.getElementById('common-foods').innerHTML = `<p>Error fetching common foods.</p>`;
+            }
+        }
+
+        // Display Nutritionix Search Results
+        function displayNutritionixResults(foods) {
+            const searchResultsDiv = document.getElementById('nutritionix-search-results');
+            if (foods.length === 0) {
+                searchResultsDiv.innerHTML = '<p>No results found.</p>';
+                return;
+            }
+            searchResultsDiv.innerHTML = foods.map(food => `
+                <div class="nutritionix-item">
+                    <div>
+                        <h3>${food.food_name}</h3>
+                        <p>Calories: ${food.nf_calories ? food.nf_calories.toFixed(2) : 'N/A'}</p>
+                        <p>Serving: ${food.serving_qty} ${food.serving_unit}</p>
+                    </div>
+                    <button onclick="addFoodToMeal('${food.food_name}', ${food.nf_calories || 0})">Add to Meal</button>
+                </div>
+            `).join('');
+            gsap.from('.nutritionix-item', { opacity: 0, y: 30, stagger: 0.1, duration: 0.5 });
+        }
+
+        // Display Common Foods
+        function displayCommonFoods(foods) {
+            const commonFoodsDiv = document.getElementById('common-foods');
+            if (foods.length === 0) {
+                commonFoodsDiv.innerHTML = '<p>No common foods found.</p>';
+                return;
+            }
+            commonFoodsDiv.innerHTML = foods.map(food => `
+                <div class="nutritionix-item">
+                    <div>
+                        <h3>${food.food_name}</h3>
+                        <p>Tag: ${food.tag_name || 'N/A'}</p>
+                    </div>
+                    <button onclick="fetchAndAddCommonFood('${food.food_name}')">Add to Meal</button>
+                </div>
+            `).join('');
+            gsap.from('.nutritionix-item', { opacity: 0, y: 30, stagger: 0.1, duration: 0.5 });
+        }
+
+        // Function to fetch details for a common food and then add to meal
+        async function fetchAndAddCommonFood(foodName) {
+            try {
+                const response = await fetch(`/api/nutritionix/natural?query=${encodeURIComponent(foodName)}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                const food = data.foods && data.foods[0];
+                if (food) {
+                    addFoodToMeal(food.food_name, food.nf_calories || 0);
+                } else {
+                    alert('Could not get detailed nutrition for this common food.');
+                }
+            } catch (error) {
+                console.error('Error fetching details for common food:', error);
+                alert('Error fetching details for this common food.');
+            }
+        }
+
+
+        // Function to add selected food to meal form
+        function addFoodToMeal(name, calories) {
+            document.getElementById('meal-name').value = name;
+            document.getElementById('calories').value = Math.round(calories);
         }
 
         // Initial load

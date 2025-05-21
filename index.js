@@ -2,6 +2,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 const express = require('express');
 const supabaseClient = require('@supabase/supabase-js');
+const axios = require('axios');
 
 const app = express();
 const port = 3000;
@@ -13,12 +14,15 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = supabaseClient.createClient(supabaseUrl, supabaseKey);
 
+// Nutritionix
+const NUTRITIONIX_APP_ID = process.env.NUTRITIONIX_APP_ID || '7688c68f'; 
+const NUTRITIONIX_API_KEY = process.env.NUTRITIONIX_API_KEY || '5b73c9212b1cd6df81b92bc862575f9f'; 
 
 app.get('/', (req, res) => {
     res.sendFile('/public/index.html', { root: __dirname });
 });
 
-// API to get nutrition summary
+// API to get nutrition summary 
 app.get('/api/nutrition-summary', async (req, res) => {
     try {
         const { data, error } = await supabase
@@ -78,6 +82,67 @@ app.post('/api/meals', async (req, res) => {
         res.status(500).json({ error: 'Internal server error', details: error.message });
     }
 });
+
+// Nutritionix Search
+// This endpoint allows users to search for food items using the Nutritionix API
+app.get('/api/nutritionix/search', async (req, res) => {
+    const query = req.query.query;
+    if (!query) {
+        return res.status(400).json({ error: 'Query parameter is required' });
+    }
+
+    try {
+        const response = await axios.post('https://trackapi.nutritionix.com/v2/natural/nutrients',
+            { query: query },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-app-id': NUTRITIONIX_APP_ID, //
+                    'x-app-key': NUTRITIONIX_API_KEY //
+                }
+            }
+        );
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error calling Nutritionix API (Search):', error.message);
+        if (error.response) {
+            console.error('Nutritionix API response error:', error.response.data);
+            res.status(error.response.status).json({ error: 'Error from Nutritionix API', details: error.response.data });
+        } else {
+            res.status(500).json({ error: 'Internal server error', details: error.message });
+        }
+    }
+});
+
+// Nutritionix Common Foods
+// This endpoint retrieves a list of common foods from the Nutritionix API
+app.get('/api/nutritionix/common', async (req, res) => {
+    try {
+        const response = await axios.get('https://trackapi.nutritionix.com/v2/search/instant',
+            {
+                headers: {
+                    'x-app-id': NUTRITIONIX_APP_ID, //
+                    'x-app-key': NUTRITIONIX_API_KEY //
+                },
+                params: {
+                    query: 'common',
+                    common: true,
+                    branded: false
+                }
+            }
+        );
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error calling Nutritionix API (Common Foods):', error.message);
+        if (error.response) {
+            console.error('Nutritionix API response error:', error.response.data);
+            res.status(error.response.status).json({ error: 'Error from Nutritionix API', details: error.response.data });
+        } else {
+            res.status(500).json({ error: 'Internal server error', details: error.message });
+        }
+    }
+});
+
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
